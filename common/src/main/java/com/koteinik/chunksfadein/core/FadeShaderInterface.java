@@ -1,17 +1,20 @@
 package com.koteinik.chunksfadein.core;
 
 import com.koteinik.chunksfadein.compat.sodium.ext.*;
+import net.minecraft.client.Minecraft;
 import org.joml.Matrix3f;
 
 public class FadeShaderInterface {
 	private GlUniformBlockExt uniformFadeDatas;
 	private GlUniformFloat2vExt screenSize;
 	private GlUniformMatrix3fExt worldInView;
+	private GlUniformIntExt cullDist;
 
 	public FadeShaderInterface(ShaderBindingContextExt context) {
 		this.uniformFadeDatas = context.bindUniformBlock("cfi_ubo_ChunkFadeDatas");
 		this.screenSize = context.bindUniformFloat2v("cfi_screenSize");
 		this.worldInView = context.bindUniformMat3f("cfi_worldInView");
+		this.cullDist = context.bindUniformInt("cfi_cullDist");
 	}
 
 	public void bindUniforms(GlMutableBufferExt fadeDataBuffer) {
@@ -20,6 +23,9 @@ public class FadeShaderInterface {
 
 		if (screenSize != null)
 			screenSize.set(Utils.mainTargetWidth(), Utils.mainTargetHeight());
+
+		if (cullDist != null)
+			cullDist.set((int) Minecraft.getInstance().gameRenderer.getRenderDistance());
 
 		if (worldInView != null)
 			worldInView.set(new Matrix3f().rotation(Utils.cameraViewRot()));

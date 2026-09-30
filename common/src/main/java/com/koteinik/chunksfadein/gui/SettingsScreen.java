@@ -38,6 +38,7 @@ public class SettingsScreen extends Screen {
 	public static final String FADE_CURVE = "settings.chunksfadein.fade_curve";
 	public static final String FADE_MIX_TYPE = "settings.chunksfadein.fade_mix_type";
 	public static final String FOG_OVERRIDE = "settings.chunksfadein.fog_override";
+	public static final String SKY_OCCLUDER = "settings.chunksfadein.sky_occluder";
 	public static final String FADE_TIME = "settings.chunksfadein.fade_time";
 	public static final String FADE_NEAR_PLAYER = "settings.chunksfadein.fade_near_player";
 	public static final String ANIMATION_ENABLED = "settings.chunksfadein.animation_enabled";
@@ -167,7 +168,11 @@ public class SettingsScreen extends Screen {
 		list.add(fadePatchShaders);
 		list.add(fadeType, fadeTime, fadeTime.makeResetButton(Config.FADE_TIME_KEY));
 		list.add(fadeCurve, fadeMixType);
+		CFIButton skyOccluder = CFIButtonBuilder.choice(SKY_OCCLUDER, Config.SKY_OCCLUDER_KEY)
+			.onPress(markDirty)
+			.build();
 		list.add(fogOverride, fadeNearPlayer);
+		list.add(skyOccluder);
 
 		CFIButton animationEnabled = CFIButtonBuilder.choice(ANIMATION_ENABLED, Config.ANIMATION_ENABLED_KEY)
 			.onPress(markDirty)

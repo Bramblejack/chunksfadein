@@ -32,6 +32,35 @@ public class SkyFBO {
 		return instance;
 	}
 
+	private static SkyFBO cleanInstance = null;
+
+	public static synchronized SkyFBO getCleanInstance() {
+		Window window = Minecraft.getInstance().getWindow();
+		int windowWidth = window.getWidth();
+		int windowHeight = window.getHeight();
+
+		try {
+			if (cleanInstance == null) {
+				cleanInstance = new SkyFBO(windowWidth, windowHeight);
+			} else if (cleanInstance.width != windowWidth || cleanInstance.height != windowHeight) {
+				cleanInstance.cleanup();
+				cleanInstance = new SkyFBO(windowWidth, windowHeight);
+			}
+		} catch (Exception e) {
+			Logger.error("Failed to create clean SkyFBO: ", e);
+			cleanInstance = null;
+		}
+
+		return cleanInstance;
+	}
+
+	public static void bindClean(int texture) {
+		SkyFBO instance = getCleanInstance();
+		if (instance == null) return;
+
+		instance.bindTexture(texture);
+	}
+
 	public static int getWidth() {
 		SkyFBO instance = getInstance();
 		if (instance == null) return -1;

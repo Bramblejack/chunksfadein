@@ -43,6 +43,7 @@ public class Config {
 	public static final String FADE_CURVE_KEY = "fade-curve";
 	public static final String FADE_MIX_TYPE_KEY = "fade-mix-type";
 	public static final String FOG_OVERRIDE_KEY = "fog-override";
+	public static final String SKY_OCCLUDER_KEY = "sky-occluder";
 	public static final String FADE_NEAR_PLAYER_KEY = "fade-near-player";
 	public static final String ANIMATION_ENABLED_KEY = "animation-enabled";
 	public static final String ANIMATION_PATCH_SHADERS_KEY = "animation-patch-shaders";
@@ -66,6 +67,7 @@ public class Config {
 	public static boolean showModTabInSettings;
 	public static boolean isFadeEnabled;
 	public static boolean fadeNearPlayer;
+	public static boolean skyOccluder;
 	public static boolean patchShaderFade;
 	public static boolean isAnimationEnabled;
 	public static boolean animateNearPlayer;
@@ -196,6 +198,8 @@ public class Config {
 			.addListener((o) -> patchShaderFade = o);
 		addEntry(new ConfigEntry<>(true, FADE_NEAR_PLAYER_KEY, tooltip(FADE_NEAR_PLAYER), Type.BOOLEAN))
 			.addListener((o) -> fadeNearPlayer = o);
+		addEntry(new ConfigEntry<>(true, SKY_OCCLUDER_KEY, tooltip(SKY_OCCLUDER), Type.BOOLEAN))
+			.addListener((o) -> skyOccluder = o);
 		addEntry(new ConfigEntry<>(false, ANIMATION_ENABLED_KEY, tooltip(ANIMATION_ENABLED), Type.BOOLEAN))
 			.addListener((o) -> isAnimationEnabled = o);
 		addEntry(new ConfigEntry<>(true, ANIMATION_PATCH_SHADERS_KEY, tooltip(ANIMATION_PATCH_SHADERS), Type.BOOLEAN))

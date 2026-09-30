@@ -41,6 +41,8 @@
   "settings.chunksfadein.fog_override.cylindrical": "Cylindrical",
   "settings.chunksfadein.fog_override.spherical": "Spherical",
   "settings.chunksfadein.fog_override.none": "None",
+  "settings.chunksfadein.sky_occluder": "Sky occluder",
+  "settings.chunksfadein.sky_occluder.tooltip": "Covers everything below the horizon with the fog colour, like Minecraft 26.4 does, so the sun, moon and stars are not visible through the ground or the faded terrain at the edge of the render distance. Turn it off if another mod already does this.",
   "settings.chunksfadein.fade_time": "Fade time",
   "settings.chunksfadein.fade_time.tooltip": "Controls the time it takes for chunks to fade in fully.",
   "settings.chunksfadein.fade_near_player": "Fade near player",

@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = ChunkShaderInterface.class, remap = false)
 public abstract class ChunkShaderInterfaceMixin implements ChunkShaderInterfaceExt {
 	private GlUniformIntExt sky;
+	private GlUniformIntExt skyClean;
 
 	private FadeShaderInterface fadeInterface;
 	private static boolean warned = false;
@@ -33,6 +34,7 @@ public abstract class ChunkShaderInterfaceMixin implements ChunkShaderInterfaceE
 
 		fadeInterface = new FadeShaderInterface(ext);
 		sky = ext.bindUniformInt("cfi_sky");
+		skyClean = ext.bindUniformInt("cfi_skyClean");
 	}
 
 	@Override
@@ -52,6 +54,15 @@ public abstract class ChunkShaderInterfaceMixin implements ChunkShaderInterfaceE
 
 			SkyFBO.bind(13);
 			sky.set(13);
+
+			GL13.glActiveTexture(prevActive);
+		}
+
+		if (skyClean != null) {
+			int prevActive = GL13.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+
+			SkyFBO.bindClean(12);
+			skyClean.set(12);
 
 			GL13.glActiveTexture(prevActive);
 		}

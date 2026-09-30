@@ -14,6 +14,8 @@ import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(value = ShaderLoader.class, remap = false)
 public abstract class ShaderLoaderMixin {
+	private static final String EDGE_FADE_WIDTH = "16.0";
+
 	@WrapMethod(method = "getShaderSource")
 	private static String modifyConstructor(ResourceLocation name, Operation<String> original) {
 		String source = original.call(name);
@@ -64,30 +66,48 @@ public abstract class ShaderLoaderMixin {
 		ShaderInjector injector = new ShaderInjector();
 		FadeShader shader = new FadeShader();
 
-		injector.insertAfterUniforms(shader.fragInVars().flushMultiline());
+		injector.insertAfterUniforms("in float cfi_ElevSin;\nuniform int cfi_cullDist;\nuniform sampler2D cfi_skyClean;\n" + shader.fragInVars().flushMultiline());
 
 		if (!Config.isModEnabled || !Config.isFadeEnabled)
 			return injector;
 
 		injector.insertAfterStr("#version 330 core", shader.utilFunctions().flushMultiline());
 
-		String inFogRange = switch (Config.fogOverrideMode) {
-			case CYLINDRICAL -> "v_FragDistance > u_FogStart";
-			case NONE -> "false";
-		};
+		String edgeExpr = Config.fogOverrideMode == FogOverrideMode.CYLINDRICAL
+			? "smoothstep(cfi_FogEnd - " + EDGE_FADE_WIDTH + ", cfi_FogEnd, v_FragDistance)"
+			: "0.0";
+
+		String fogEndExpr = Config.fogOverrideMode == FogOverrideMode.CYLINDRICAL
+			? "(cfi_cullDist > 0 ? min(u_FogEnd, float(cfi_cullDist)) : u_FogEnd)"
+			: "u_FogEnd";
+
+		String belowHorizon = belowHorizonMix("fadeColor");
+
+		String hazeBlock = Config.fogOverrideMode == FogOverrideMode.CYLINDRICAL
+			? String.join("\n",
+			"if (v_FragDistance > u_FogStart) {",
+			"vec3 cfi_haze = texture(cfi_skyClean, gl_FragCoord.xy / cfi_screenSize).rgb;",
+			belowHorizonMix("cfi_haze"),
+			"fogColor.rgb = cfi_haze;",
+			"}")
+			: "";
 
 		injector.replace(
 			"fragColor = _linearFog({color}, v_FragDistance, u_FogColor, u_FogStart, u_FogEnd);",
 			"#ifdef USE_FOG",
 			"vec3 fadeColor;",
 			"vec4 fogColor = u_FogColor;",
-			"if (cfi_FadeFactor < 1.0 || %s) {".formatted(inFogRange),
+			"float cfi_FogEnd = %s;".formatted(fogEndExpr),
+			"float cfi_Edge = %s;".formatted(edgeExpr),
+			"if (cfi_FadeFactor < 1.0 || cfi_Edge > 0.0) {",
 			"fadeColor = texture(cfi_sky, gl_FragCoord.xy / cfi_screenSize).rgb;",
-			"if (%s) {".formatted(inFogRange),
-			"fogColor.rgb = fadeColor;",
+			belowHorizon,
 			"}",
-			"}",
+			hazeBlock,
 			"fragColor = _linearFog({color}, v_FragDistance, fogColor, u_FogStart, u_FogEnd);",
+			"if (cfi_Edge > 0.0) {",
+			"fragColor.rgb = mix(fragColor.rgb, fadeColor, cfi_Edge);",
+			"}",
 			shader.fragColorMod("{frag_color}.rgb", "fadeColor", true).flushMultiline(),
 			"#else",
 			"if (cfi_FadeFactor < 1.0) {",
@@ -103,11 +123,18 @@ public abstract class ShaderLoaderMixin {
 		return injector;
 	}
 
+	private static String belowHorizonMix(String var) {
+		if (Config.fogOverrideMode != FogOverrideMode.CYLINDRICAL || !Config.skyOccluder)
+			return "";
+
+		return var + " = mix(" + var + ", u_FogColor.rgb, smoothstep(0.0, 1.0, clamp((degrees(asin(clamp(cfi_ElevSin, -1.0, 1.0))) + 1.0) / -7.0, 0.0, 1.0)));";
+	}
+
 	private static ShaderInjector prepareVertexInjector() {
 		ShaderInjector injector = new ShaderInjector();
 		FadeShader shader = new FadeShader();
 
-		injector.insertAfterUniforms(shader
+		injector.insertAfterUniforms("out float cfi_ElevSin;\n" + shader
 			.vertInVars()
 			.vertOutVars()
 			.flushMultiline());
@@ -118,6 +145,7 @@ public abstract class ShaderLoaderMixin {
 			"_vert_init();",
 			shader
 				.newLine("vec3 cfi_position = _vert_position + u_RegionOffset + _get_draw_translation(_draw_id);")
+				.newLine("cfi_ElevSin = cfi_position.y / max(length(cfi_position), 0.001);")
 				.worldToLocal("u_ModelViewMatrix")
 				.vertInitOutVarsDrawId("_vert_position", "{mesh_id}")
 				.vertInitMod("_vert_position", "cfi_position", "_vert_position", "vec3({mesh_id})", true)
