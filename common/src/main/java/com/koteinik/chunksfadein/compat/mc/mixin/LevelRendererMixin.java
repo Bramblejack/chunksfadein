@@ -4,6 +4,7 @@ import com.koteinik.chunksfadein.config.Config;
 import com.koteinik.chunksfadein.core.RenderPhase;
 import com.koteinik.chunksfadein.core.SkyFBO;
 import com.koteinik.chunksfadein.core.SkyOccluder;
+import com.koteinik.chunksfadein.core.SkyVisibility;
 import com.koteinik.chunksfadein.core.Utils;
 import com.koteinik.chunksfadein.hooks.CompatibilityHook;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -27,6 +28,7 @@ public class LevelRendererMixin {
 		RenderPhase.renderingLevel = true;
 		RenderPhase.cleanSkyTaken = false;
 		RenderPhase.fogSetups = 0;
+		SkyVisibility.update(camera);
 	}
 
 	@Inject(

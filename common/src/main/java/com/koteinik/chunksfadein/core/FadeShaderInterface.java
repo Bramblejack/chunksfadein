@@ -9,12 +9,14 @@ public class FadeShaderInterface {
 	private GlUniformFloat2vExt screenSize;
 	private GlUniformMatrix3fExt worldInView;
 	private GlUniformIntExt cullDist;
+	private GlUniformIntExt skyVis;
 
 	public FadeShaderInterface(ShaderBindingContextExt context) {
 		this.uniformFadeDatas = context.bindUniformBlock("cfi_ubo_ChunkFadeDatas");
 		this.screenSize = context.bindUniformFloat2v("cfi_screenSize");
 		this.worldInView = context.bindUniformMat3f("cfi_worldInView");
 		this.cullDist = context.bindUniformInt("cfi_cullDist");
+		this.skyVis = context.bindUniformInt("cfi_skyVis");
 	}
 
 	public void bindUniforms(GlMutableBufferExt fadeDataBuffer) {
@@ -26,6 +28,9 @@ public class FadeShaderInterface {
 
 		if (cullDist != null)
 			cullDist.set((int) Minecraft.getInstance().gameRenderer.getRenderDistance());
+
+		if (skyVis != null)
+			skyVis.set(SkyVisibility.asByte());
 
 		if (worldInView != null)
 			worldInView.set(new Matrix3f().rotation(Utils.cameraViewRot()));

@@ -66,7 +66,7 @@ public abstract class ShaderLoaderMixin {
 		ShaderInjector injector = new ShaderInjector();
 		FadeShader shader = new FadeShader();
 
-		injector.insertAfterUniforms("in float cfi_ElevSin;\nuniform int cfi_cullDist;\nuniform sampler2D cfi_skyClean;\n" + shader.fragInVars().flushMultiline());
+		injector.insertAfterUniforms("in float cfi_ElevSin;\nuniform int cfi_cullDist;\nuniform int cfi_skyVis;\nuniform sampler2D cfi_skyClean;\n" + shader.fragInVars().flushMultiline());
 
 		if (!Config.isModEnabled || !Config.isFadeEnabled)
 			return injector;
@@ -86,7 +86,8 @@ public abstract class ShaderLoaderMixin {
 		String hazeBlock = Config.fogOverrideMode == FogOverrideMode.CYLINDRICAL
 			? String.join("\n",
 			"if (v_FragDistance > u_FogStart) {",
-			"vec3 cfi_haze = texture(cfi_skyClean, gl_FragCoord.xy / cfi_screenSize).rgb;",
+			"vec2 cfi_uv = gl_FragCoord.xy / cfi_screenSize;",
+			"vec3 cfi_haze = mix(texture(cfi_sky, cfi_uv).rgb, texture(cfi_skyClean, cfi_uv).rgb, float(cfi_skyVis) / 255.0);",
 			belowHorizonMix("cfi_haze"),
 			"fogColor.rgb = cfi_haze;",
 			"}")
