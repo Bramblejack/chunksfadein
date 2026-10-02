@@ -1,5 +1,7 @@
 package com.koteinik.chunksfadein.core;
 
+import com.koteinik.chunksfadein.config.Config;
+import com.koteinik.chunksfadein.hooks.CompatibilityHook;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -26,6 +28,16 @@ public class SkyVisibility {
 		lastUpdate = now;
 
 		value += (target - value) * (1.0F - (float) Math.exp(-delta / SMOOTHING_SECONDS));
+	}
+
+	public static int shaderValue() {
+		if (!Config.isModEnabled || !Config.isFadeEnabled || Config.fogOverrideMode != FogOverrideMode.CYLINDRICAL)
+			return -1;
+
+		if (!RenderPhase.renderingLevel || RenderPhase.fogSetups < 2 || CompatibilityHook.isIrisShaderPackInUse())
+			return -1;
+
+		return asByte();
 	}
 
 	public static int asByte() {

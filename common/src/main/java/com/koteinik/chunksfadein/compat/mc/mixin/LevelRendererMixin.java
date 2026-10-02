@@ -28,6 +28,7 @@ public class LevelRendererMixin {
 		RenderPhase.renderingLevel = true;
 		RenderPhase.cleanSkyTaken = false;
 		RenderPhase.fogSetups = 0;
+		RenderPhase.frame++;
 		SkyVisibility.update(camera);
 	}
 
@@ -79,6 +80,7 @@ public class LevelRendererMixin {
 			return;
 
 		snapshot(SkyFBO.getCleanInstance());
+		SkyOccluder.renderInto(SkyFBO.getCleanInstance(), poseStack, f, camera);
 		RenderPhase.cleanSkyTaken = true;
 	}
 

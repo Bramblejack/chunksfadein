@@ -5,4 +5,5 @@ public class RenderPhase {
 
 	public static boolean cleanSkyTaken = false;
 	public static int fogSetups = 0;
+	public static int frame = 0;
 }
