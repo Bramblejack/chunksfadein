@@ -1,15 +1,17 @@
 modLoader = "javafml"
 loaderVersion = "*"
 license = "GPLv3"
+issueTrackerURL="https://github.com/Bramblejack/chunksfadein/issues"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/chunks-fade-in-extra"
 
 [[mods]]
 modId = "chunksfadein"
 version = "${version}"
-displayName = "Chunks Fade In"
+displayName = "Chunks Fade In Extra"
 
 logoFile = "icon.png"
 authors = "kerudion (koteinik)"
-credits = "IMS212, IMB11, cadenkriese, felix14_v2, embeddedt, M4ximumPizza, hexadecimal233, fefe_du_973, yejianfeng, moorey5107, theRookieCoder, qznfbnj"
+credits = "IMS212, IMB11, cadenkriese, felix14_v2, embeddedt, M4ximumPizza, hexadecimal233, fefe_du_973, yejianfeng, moorey5107, theRookieCoder, qznfbnj, Bramblejack"
 description = '''
 Adds fade-in and motion animations for chunks!
 '''

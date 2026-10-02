@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "chunksfadein",
   "version": "${version}",
-  "name": "Chunks Fade In",
+  "name": "Chunks Fade In Extra",
   "description": "Adds fade-in and motion animations for chunks!",
   "authors": [
     {
@@ -24,12 +24,13 @@
     "yejianfeng",
     "moorey5107",
     "theRookieCoder",
-    "qznfbnj"
+    "qznfbnj",
+    "Bramblejack"
   ],
   "contact": {
-    "homepage": "https://github.com/kerudion/chunksfadein",
-    "sources": "https://github.com/kerudion/chunksfadein",
-    "issues": "https://github.com/kerudion/chunksfadein/issues"
+    "homepage": "https://github.com/Bramblejack/chunksfadein",
+    "sources": "https://github.com/Bramblejack/chunksfadein",
+    "issues": "https://github.com/Bramblejack/chunksfadein/issues"
   },
   "license": "GPLv3",
   "icon": "assets/chunksfadein/icon.png",

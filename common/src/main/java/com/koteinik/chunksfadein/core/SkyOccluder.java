@@ -13,6 +13,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.material.FogType;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
@@ -33,19 +34,52 @@ public class SkyOccluder {
 	private static final int RAMP_STEPS = 12;
 
 	public static void render(PoseStack poseStack, float partialTick, Camera camera) {
-		if (!Config.isModEnabled || !Config.skyOccluder)
+		float[] angles = angles(partialTick, camera);
+		if (angles == null)
 			return;
+
+		float[] fogColor = RenderSystem.getShaderFogColor();
+		draw(poseStack.last().pose(), fogColor[0], fogColor[1], fogColor[2], angles[0], angles[1], false);
+	}
+
+	public static void renderInto(SkyFBO fbo, PoseStack poseStack, float partialTick, Camera camera) {
+		if (fbo == null)
+			return;
+
+		float[] angles = angles(partialTick, camera);
+		if (angles == null)
+			return;
+
+		float[] fogColor = RenderSystem.getShaderFogColor();
+
+		int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+		int[] viewport = new int[4];
+		GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
+
+		GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, fbo.id);
+		GL11.glViewport(0, 0, fbo.width, fbo.height);
+		try {
+			draw(poseStack.last().pose(), fogColor[0], fogColor[1], fogColor[2], angles[0], angles[1], true);
+		} finally {
+			GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, previousDraw);
+			GL11.glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+		}
+	}
+
+	private static float[] angles(float partialTick, Camera camera) {
+		if (!Config.isModEnabled || !Config.skyOccluder)
+			return null;
 
 		Minecraft minecraft = Minecraft.getInstance();
 		ClientLevel level = minecraft.level;
 		if (level == null || minecraft.player == null)
-			return;
+			return null;
 
 		if (level.effects().skyType() != DimensionSpecialEffects.SkyType.NORMAL)
-			return;
+			return null;
 
 		if (CompatibilityHook.isIrisShaderPackInUse())
-			return;
+			return null;
 
 		float start;
 		float end;
@@ -60,12 +94,10 @@ public class SkyOccluder {
 			end = DEFAULT_END;
 		}
 
-		float[] fogColor = RenderSystem.getShaderFogColor();
-
-		draw(poseStack.last().pose(), fogColor[0], fogColor[1], fogColor[2], start, end);
+		return new float[]{start, end};
 	}
 
-	private static void draw(Matrix4f pose, float red, float green, float blue, float start, float end) {
+	private static void draw(Matrix4f pose, float red, float green, float blue, float start, float end, boolean preserveState) {
 		float[] elevation = new float[RAMP_STEPS + 3];
 		float[] alpha = new float[RAMP_STEPS + 3];
 		elevation[0] = -90.0F;
@@ -78,16 +110,42 @@ public class SkyOccluder {
 			alpha[i + 1] = occlusionAlpha(angle, start, end);
 		}
 
-		RenderSystem.enableBlend();
-		RenderSystem.blendFuncSeparate(
-			GlStateManager.SourceFactor.SRC_ALPHA,
-			GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-			GlStateManager.SourceFactor.ZERO,
-			GlStateManager.DestFactor.ONE
-		);
-		RenderSystem.disableCull();
-		RenderSystem.disableDepthTest();
-		RenderSystem.depthMask(false);
+		boolean blend = false;
+		boolean cull = false;
+		boolean depthTest = false;
+		boolean depthMask = false;
+		int srcRgb = 0;
+		int dstRgb = 0;
+		int srcAlpha = 0;
+		int dstAlpha = 0;
+
+		if (preserveState) {
+			blend = GL11.glIsEnabled(GL11.GL_BLEND);
+			cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+			depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+			depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+			srcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB);
+			dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
+			srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
+			dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+
+			GL11.glEnable(GL11.GL_BLEND);
+			GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
+			GL11.glDisable(GL11.GL_CULL_FACE);
+			GL11.glDisable(GL11.GL_DEPTH_TEST);
+			GL11.glDepthMask(false);
+		} else {
+			RenderSystem.enableBlend();
+			RenderSystem.blendFuncSeparate(
+				GlStateManager.SourceFactor.SRC_ALPHA,
+				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ZERO,
+				GlStateManager.DestFactor.ONE
+			);
+			RenderSystem.disableCull();
+			RenderSystem.disableDepthTest();
+			RenderSystem.depthMask(false);
+		}
 
 		vertexCount = 0;
 		for (int ring = 0; ring < elevation.length - 1; ring++) {
@@ -105,11 +163,26 @@ public class SkyOccluder {
 		}
 		flush(pose);
 
-		RenderSystem.depthMask(true);
-		RenderSystem.enableDepthTest();
-		RenderSystem.enableCull();
-		RenderSystem.defaultBlendFunc();
-		RenderSystem.disableBlend();
+		if (preserveState) {
+			GL11.glDepthMask(depthMask);
+			setEnabled(GL11.GL_DEPTH_TEST, depthTest);
+			setEnabled(GL11.GL_CULL_FACE, cull);
+			GL14.glBlendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha);
+			setEnabled(GL11.GL_BLEND, blend);
+		} else {
+			RenderSystem.depthMask(true);
+			RenderSystem.enableDepthTest();
+			RenderSystem.enableCull();
+			RenderSystem.defaultBlendFunc();
+			RenderSystem.disableBlend();
+		}
+	}
+
+	private static void setEnabled(int capability, boolean enabled) {
+		if (enabled)
+			GL11.glEnable(capability);
+		else
+			GL11.glDisable(capability);
 	}
 
 	private static final int FLOATS_PER_VERTEX = 7;

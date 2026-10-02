@@ -9,10 +9,12 @@
     "ClientboundLoginPacketMixin",
     "ClientLanguageMixin",
     "EntityRenderDispatcherMixin",
+    "GlslPreprocessorMixin",
     "ItemFrameEntityRendererMixin",
     "LanguageMixin",
     "LevelRendererMixin",
-    "MinecraftMixin"
+    "MinecraftMixin",
+    "ShaderInstanceMixin"
   ],
   "server": [],
   "injectors": {
