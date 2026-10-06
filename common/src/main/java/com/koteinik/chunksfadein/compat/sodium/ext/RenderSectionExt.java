@@ -9,6 +9,12 @@ public interface RenderSectionExt {
 
 	void dhMarkRendered();
 
+	/** True once fade and animation have both completed and their final values are in the buffer. */
+	boolean isSettled();
+
+	/** Recomputes the settled flag; call after the buffer has been written for this frame. */
+	void updateSettled();
+
 	long calculateAndGetDelta();
 
 	float[] getAnimationOffset();

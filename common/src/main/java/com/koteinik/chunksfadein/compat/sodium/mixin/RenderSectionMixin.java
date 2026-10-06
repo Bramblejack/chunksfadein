@@ -35,6 +35,7 @@ public class RenderSectionMixin implements RenderSectionExt {
 	private Fader fader;
 	private boolean completedFade = false;
 	private boolean completedAnimation = false;
+	private boolean settled = false;
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void modifyInit(RenderRegion region, int chunkX, int chunkY, int chunkZ, CallbackInfo ci) {
@@ -55,6 +56,16 @@ public class RenderSectionMixin implements RenderSectionExt {
 	public void dhMarkRendered() {
 		if ((completedFade || !Config.isFadeEnabled) && (completedAnimation || !Config.isAnimationEnabled))
 			LodMaskTexture.markRendered(chunkX, chunkY, chunkZ);
+	}
+
+	@Override
+	public boolean isSettled() {
+		return settled;
+	}
+
+	@Override
+	public void updateSettled() {
+		settled = completedFade && completedAnimation;
 	}
 
 	@Override
@@ -101,10 +112,10 @@ public class RenderSectionMixin implements RenderSectionExt {
 	}
 
 	private boolean isNearPlayer() {
-		SectionPos chunkPos = SectionPos.of(Utils.cameraPosition());
+		net.minecraft.world.phys.Vec3 cam = Utils.cameraPosition();
 
-		final int camChunkX = chunkPos.getX();
-		final int camChunkZ = chunkPos.getZ();
+		final int camChunkX = SectionPos.blockToSectionCoord(net.minecraft.util.Mth.floor(cam.x));
+		final int camChunkZ = SectionPos.blockToSectionCoord(net.minecraft.util.Mth.floor(cam.z));
 
 		return MathUtils.chunkInRange(chunkX, chunkZ, camChunkX, camChunkZ, 1);
 	}

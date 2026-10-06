@@ -52,6 +52,15 @@ public class ChunkFadeInController {
 	}
 
 	public void processChunk(RenderSectionExt section, int sectionIndex) {
+		// Fast path: fade and animation are finished and their final values are already in the
+		// buffer, so nothing below would change. The DH mask is rebuilt every frame, so the
+		// section still has to be re-marked as rendered. If fade or animation gets disabled in
+		// the config the full path runs again, exactly as before.
+		if (Config.isFadeEnabled && Config.isAnimationEnabled && section.isSettled()) {
+			section.dhMarkRendered();
+			return;
+		}
+
 		long delta = section.calculateAndGetDelta();
 
 		section.dhMarkRendered();
@@ -69,6 +78,7 @@ public class ChunkFadeInController {
 					chunkFadeDatasBuffer.put(sectionIndex, i, 0f);
 
 		section.setRenderedBefore();
+		section.updateSettled();
 	}
 
 	public void delete(CommandListExt commandList) {
