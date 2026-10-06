@@ -10,6 +10,7 @@ public class FadeShaderInterface {
 	private GlUniformMatrix3fExt worldInView;
 	private GlUniformIntExt cullDist;
 	private GlUniformIntExt skyVis;
+	private GlUniformIntExt fogCull;
 
 	public FadeShaderInterface(ShaderBindingContextExt context) {
 		this.uniformFadeDatas = context.bindUniformBlock("cfi_ubo_ChunkFadeDatas");
@@ -17,6 +18,7 @@ public class FadeShaderInterface {
 		this.worldInView = context.bindUniformMat3f("cfi_worldInView");
 		this.cullDist = context.bindUniformInt("cfi_cullDist");
 		this.skyVis = context.bindUniformInt("cfi_skyVis");
+		this.fogCull = context.bindUniformInt("cfi_fogCull");
 	}
 
 	public void bindUniforms(GlMutableBufferExt fadeDataBuffer) {
@@ -28,6 +30,9 @@ public class FadeShaderInterface {
 
 		if (cullDist != null)
 			cullDist.set((int) Minecraft.getInstance().gameRenderer.getRenderDistance());
+
+		if (fogCull != null)
+			fogCull.set(FogCulling.enabled() ? 1 : 0);
 
 		if (skyVis != null)
 			skyVis.set(SkyVisibility.asByte());

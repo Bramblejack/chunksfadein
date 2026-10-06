@@ -7,6 +7,7 @@ import com.koteinik.chunksfadein.core.SkyOccluder;
 import com.koteinik.chunksfadein.core.SkyVisibility;
 import com.koteinik.chunksfadein.core.Utils;
 import com.koteinik.chunksfadein.hooks.CompatibilityHook;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
@@ -29,7 +30,7 @@ public class LevelRendererMixin {
 		RenderPhase.cleanSkyTaken = false;
 		RenderPhase.fogSetups = 0;
 		RenderPhase.frame++;
-		SkyVisibility.update(camera);
+		SkyVisibility.update(camera, f);
 	}
 
 	@Inject(
@@ -82,6 +83,25 @@ public class LevelRendererMixin {
 		snapshot(SkyFBO.getCleanInstance());
 		SkyOccluder.renderInto(SkyFBO.getCleanInstance(), poseStack, f, camera);
 		RenderPhase.cleanSkyTaken = true;
+	}
+
+	/**
+	 * Vanilla draws a black plane under the horizon while the eye is below the horizon height (in caves). The
+	 * occluder fades from the sky into its colour over a few degrees under the horizon, so with the black plane
+	 * there it would fade through black instead. The occluder covers that area anyway, so skip the plane.
+	 */
+	@ModifyExpressionValue(
+		method = "renderSky",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/multiplayer/ClientLevel$ClientLevelData;getHorizonHeight(Lnet/minecraft/world/level/LevelHeightAccessor;)D"
+		)
+	)
+	private double cfi_skipDarkDisc(double horizonHeight) {
+		if (RenderPhase.renderingLevel && SkyOccluder.active())
+			return -1.0E9;
+
+		return horizonHeight;
 	}
 
 	private static void snapshot(SkyFBO fbo) {

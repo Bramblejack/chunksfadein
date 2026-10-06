@@ -6,6 +6,7 @@ import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.LightLayer;
 
@@ -15,13 +16,17 @@ public class SkyVisibility {
 	private static float value = 1.0F;
 	private static long lastUpdate;
 
-	public static void update(Camera camera) {
+	public static void update(Camera camera, float partialTick) {
 		ClientLevel level = Minecraft.getInstance().level;
 		if (level == null)
 			return;
 
-		float target = level.getBrightness(LightLayer.SKY, camera.getBlockPosition()) / 15.0F;
-		target = target * target * (3.0F - 2.0F * target);
+		float target = FogLooksCompat.skyCoverVisibility(partialTick);
+		if (Float.isNaN(target)) {
+			BlockPos pos = camera.getBlockPosition();
+			int light = Math.max(level.getBrightness(LightLayer.SKY, pos), level.getBrightness(LightLayer.SKY, pos.above()));
+			target = light > 0 ? 1.0F : 0.0F;
+		}
 
 		long now = Util.getMillis();
 		float delta = Math.min((now - lastUpdate) / 1000.0F, 0.25F);

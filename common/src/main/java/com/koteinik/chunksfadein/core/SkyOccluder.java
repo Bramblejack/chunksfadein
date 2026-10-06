@@ -66,20 +66,28 @@ public class SkyOccluder {
 		}
 	}
 
-	private static float[] angles(float partialTick, Camera camera) {
+	/** Whether the occluder is drawn this frame (ignoring the camera state). */
+	public static boolean active() {
 		if (!Config.isModEnabled || !Config.skyOccluder)
-			return null;
+			return false;
 
 		Minecraft minecraft = Minecraft.getInstance();
 		ClientLevel level = minecraft.level;
 		if (level == null || minecraft.player == null)
-			return null;
+			return false;
 
 		if (level.effects().skyType() != DimensionSpecialEffects.SkyType.NORMAL)
+			return false;
+
+		return !CompatibilityHook.isIrisShaderPackInUse();
+	}
+
+	private static float[] angles(float partialTick, Camera camera) {
+		if (!active())
 			return null;
 
-		if (CompatibilityHook.isIrisShaderPackInUse())
-			return null;
+		Minecraft minecraft = Minecraft.getInstance();
+		ClientLevel level = minecraft.level;
 
 		float start;
 		float end;
